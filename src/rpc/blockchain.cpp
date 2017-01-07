@@ -18,6 +18,7 @@
 #include "txmempool.h"
 #include "util.h"
 #include "utilstrencodings.h"
+#include "net_processing.h"
 #include "hash.h"
 
 #include <stdint.h>
@@ -445,9 +446,8 @@ UniValue getrawmempool(const JSONRPCRequest& request)
 UniValue getraworphanpool(const JSONRPCRequest& request)
 {
     UniValue ret(UniValue::VOBJ);
-    ret.push_back(Pair("size", 100));
-    return ret;
-    
+    ret.push_back(Pair("numorphans", (int)orphanTxSize()));
+    return ret; 
 }
 
 UniValue getmempoolancestors(const JSONRPCRequest& request)
@@ -1409,11 +1409,5 @@ static const CRPCCommand commands[] =
 void RegisterBlockchainRPCCommands(CRPCTable &t)
 {
     for (unsigned int vcidx = 0; vcidx < ARRAYLEN(commands); vcidx++)
-    {
         t.appendCommand(commands[vcidx].name, &commands[vcidx]);
-        if (commands[vcidx].name.compare("getraworphanpool"))
-        {
-            printf("getraworphanpool\n");
-        }
-    }
 }

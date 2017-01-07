@@ -49,4 +49,6 @@ bool ProcessMessages(CNode* pfrom, CConnman& connman, std::atomic<bool>& interru
  */
 bool SendMessages(CNode* pto, CConnman& connman, std::atomic<bool>& interrupt);
 
+unsigned long orphanTxSize();
+
 #endif // BITCOIN_NET_PROCESSING_H
