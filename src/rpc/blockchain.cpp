@@ -442,6 +442,14 @@ UniValue getrawmempool(const JSONRPCRequest& request)
     return mempoolToJSON(fVerbose);
 }
 
+UniValue getraworphanpool(const JSONRPCRequest& request)
+{
+    UniValue ret(UniValue::VOBJ);
+    ret.push_back(Pair("size", 100));
+    return ret;
+    
+}
+
 UniValue getmempoolancestors(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() < 1 || request.params.size() > 2) {
@@ -1366,6 +1374,7 @@ UniValue reconsiderblock(const JSONRPCRequest& request)
     return NullUniValue;
 }
 
+
 static const CRPCCommand commands[] =
 { //  category              name                      actor (function)         okSafeMode
   //  --------------------- ------------------------  -----------------------  ----------
@@ -1387,6 +1396,7 @@ static const CRPCCommand commands[] =
     { "blockchain",         "verifychain",            &verifychain,            true  },
 
     { "blockchain",         "preciousblock",          &preciousblock,          true  },
+    { "blockchain",         "getraworphanpool",       &getraworphanpool,       true  },
 
     /* Not shown in help */
     { "hidden",             "invalidateblock",        &invalidateblock,        true  },
@@ -1399,5 +1409,11 @@ static const CRPCCommand commands[] =
 void RegisterBlockchainRPCCommands(CRPCTable &t)
 {
     for (unsigned int vcidx = 0; vcidx < ARRAYLEN(commands); vcidx++)
+    {
         t.appendCommand(commands[vcidx].name, &commands[vcidx]);
+        if (commands[vcidx].name.compare("getraworphanpool"))
+        {
+            printf("getraworphanpool\n");
+        }
+    }
 }
