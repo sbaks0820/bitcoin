@@ -832,16 +832,54 @@ size_t CConnman::SocketSendData(CNode *pnode) const
 {
     auto it = pnode->vSendMsg.begin();
     size_t nSentSize = 0;
-
+    int seen_inv_hdr = 0;
+    std::string msg;
+    std::stringstream ss;
     while (it != pnode->vSendMsg.end()) {
         const auto &data = *it;
         assert(data.size() > pnode->nSendOffset);
+        
         int nBytes = 0;
         {
             LOCK(pnode->cs_hSocket);
             if (pnode->hSocket == INVALID_SOCKET)
                 break;
-            nBytes = send(pnode->hSocket, reinterpret_cast<const char*>(data.data()) + pnode->nSendOffset, data.size() - pnode->nSendOffset, MSG_NOSIGNAL | MSG_DONTWAIT);
+            const char * d = reinterpret_cast<const char*>(data.data()) + pnode->nSendOffset;
+            if (seen_inv_hdr == 1)
+            {
+                ss << std::internal << std::setfill('0');
+                std::cout << std::internal << std::setfill('0');
+                for (unsigned int i = 0; i < data.size(); i++)
+                {
+                    std::cout << std::hex << std::setw(2) << (int)((unsigned char)(d[i]));
+                    ss << std::hex << std::setw(2) << (int)((unsigned char)(d[i]));
+                }
+                std::string msg(ss.str());
+                LogPrintf("InvMsg2 to %s: %s\n", pnode->GetAddrName(), msg);
+                std::cout << std::endl << std::endl;
+                seen_inv_hdr = 0;
+                ss.str( std::string() );
+                ss.clear();
+            }
+            int res = strncmp(&d[4], "inv", 3);
+            if (res == 0)
+            {
+                std::stringstream ss1;
+                ss << std::internal << std::setfill('0');
+                ss1 << std::internal << std::setfill('0');
+                std::cout << std::internal << std::setfill('0');
+                seen_inv_hdr = 1;
+                for (unsigned int i = 0; i < data.size() - pnode->nSendOffset; i++)
+                {
+                    std::cout << std::hex << std::setw(2) << (int)((unsigned char)(d[i]));
+                    ss << std::hex << std::setw(2) << (int)((unsigned char)(d[i]));
+                    ss1 << std::hex << std::setw(2) << (int)((unsigned char)(d[i]));
+                }
+                std::string msg(ss1.str());
+                LogPrintf("InvMsg1 to %s: %s\n", pnode->GetAddrName(), msg);
+                std::cout << std::endl << std::endl;
+            }
+            nBytes = send(pnode->hSocket, d, data.size() - pnode->nSendOffset, MSG_NOSIGNAL | MSG_DONTWAIT);
         }
         if (nBytes > 0) {
             pnode->nLastSend = GetSystemTimeInSeconds();
