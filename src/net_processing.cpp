@@ -1546,7 +1546,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
                 return true;
 
             bool fAlreadyHave = AlreadyHave(inv);
-            LogPrint("net", "got inv: %s  %s peer=%d\n", inv.ToString(), fAlreadyHave ? "have" : "new", pfrom->id);
+            LogPrint("net", "got inv: %s  %s peer=%d, %s\n", inv.ToString(), fAlreadyHave ? "have" : "new", pfrom->id, pfrom->GetAddrName());
 
             if (inv.type == MSG_TX) {
                 inv.type |= nFetchFlags;
