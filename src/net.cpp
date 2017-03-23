@@ -837,35 +837,52 @@ size_t CConnman::SocketSendData(CNode *pnode) const
     while (it != pnode->vSendMsg.end()) {
         const auto &data = *it;
         assert(data.size() > pnode->nSendOffset);
-        
+        std::stringstream start; 
         int nBytes = 0;
         {
             LOCK(pnode->cs_hSocket);
             if (pnode->hSocket == INVALID_SOCKET)
                 break;
             const char * d = reinterpret_cast<const char*>(data.data()) + pnode->nSendOffset;
+            start << std::internal << std::setfill('0');
+            for (unsigned int i = 0; i < 4; i++)
+            {
+                start << std::hex << std::setw(2) << (int)((unsigned char)(d[i]));
+            }
+            std::string st(start.str());
+            int startcheck = st.compare("0b110907");
+            if (startcheck == 0) 
+            {
+                LogPrintf("Message start seen\n");
+            }
             if (seen_inv_hdr == 1)
             {
+                LogPrintf("Last message was inv header\n");
                 ss << std::internal << std::setfill('0');
-                for (unsigned int i = 0; i < data.size(); i++)
+                for (unsigned int i = 0; i < data.size() - pnode->nSendOffset; i++)
                 {
                     ss << std::hex << std::setw(2) << (int)((unsigned char)(d[i]));
                 }
-                std::string msg(ss.str());
-                LogPrintf("inv to %s: %s\n", pnode->GetAddrName(), msg);
-                seen_inv_hdr = 0;
-                ss.str( std::string() );
-                ss.clear();
+                if (startcheck == 0 || 1)
+                {
+                    std::string msg(ss.str());
+                    LogPrintf("Inv2 to %s: %s\n", pnode->GetAddrName(), msg);
+                    ss.str( std::string() );
+                    ss.clear();
+                    seen_inv_hdr = 0;
+                }
             }
             int res = strncmp(&d[4], "inv", 3);
             if (res == 0)
             {
                 ss << std::internal << std::setfill('0');
-                seen_inv_hdr = 1;
                 for (unsigned int i = 0; i < data.size() - pnode->nSendOffset; i++)
                 {
                     ss << std::hex << std::setw(2) << (int)((unsigned char)(d[i]));
                 }
+                std::string m(ss.str());
+                //LogPrintf("Inv1 from %s: %s\n", pnode->GetAddrName(), m);
+                seen_inv_hdr = 1;
             }
             nBytes = send(pnode->hSocket, d, data.size() - pnode->nSendOffset, MSG_NOSIGNAL | MSG_DONTWAIT);
         }
